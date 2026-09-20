@@ -18,7 +18,7 @@ const AuthContext = createContext<AuthContextValue>({
 
 export const useAuth = () => useContext(AuthContext);
 
-const PUBLIC_ROUTES = ['/login', '/register', '/forgot-password', '/reset-password'];
+const PUBLIC_ROUTES = ['/login', '/register', '/forgot-password', '/reset-password', '/setup'];
 
 const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, setUser, logout, isLoading } = useAuthStore();
@@ -31,6 +31,11 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
 
     const checkAuth = async () => {
       try {
+        const setupData = await api.get('/auth/setup-check');
+        if (setupData.setupRequired) {
+          navigate('/setup', { replace: true });
+          return;
+        }
         const data = await api.get('/auth/me');
         setUser(data.user);
       } catch {

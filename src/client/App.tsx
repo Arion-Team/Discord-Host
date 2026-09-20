@@ -11,6 +11,7 @@ const ForgotPasswordPage = lazy(() => import('./pages/auth/ForgotPasswordPage'))
 const ResetPasswordPage = lazy(() => import('./pages/auth/ResetPasswordPage'));
 const WelcomePage = lazy(() => import('./pages/auth/WelcomePage'));
 const VerifyEmailPage = lazy(() => import('./pages/auth/VerifyEmailPage'));
+const SetupPage = lazy(() => import('./pages/auth/SetupPage'));
 const DashboardPage = lazy(() => import('./pages/dashboard/DashboardPage'));
 const BotsPage = lazy(() => import('./pages/dashboard/BotsPage'));
 const CreateBotPage = lazy(() => import('./pages/dashboard/CreateBotPage'));
@@ -59,6 +60,7 @@ const App: React.FC = () => {
         <Routes>
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
+          <Route path="/setup" element={<SetupPage />} />
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
           <Route path="/reset-password" element={<ResetPasswordPage />} />
           <Route path="/welcome" element={<ProtectedRoute><WelcomePage /></ProtectedRoute>} />

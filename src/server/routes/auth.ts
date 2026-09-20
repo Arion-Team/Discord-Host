@@ -65,6 +65,34 @@ function sanitizeUser(row: Record<string, unknown>) {
   };
 }
 
+router.get('/setup-check', (_req, res) => {
+  const admin = dbGet('SELECT id FROM users WHERE role = ?', ['admin']);
+  res.json({ setupRequired: !admin });
+});
+
+router.post('/setup', (req, res) => {
+  const admin = dbGet('SELECT id FROM users WHERE role = ?', ['admin']);
+  if (admin) { res.status(400).json({ error: 'Admin account already exists' }); return; }
+
+  const { email, username, password } = req.body;
+  if (!email || !username || !password) { res.status(400).json({ error: 'All fields required' }); return; }
+  if (password.length < 8) { res.status(400).json({ error: 'Password must be at least 8 characters' }); return; }
+
+  const existing = dbGet('SELECT id FROM users WHERE email = ?', [email]);
+  if (existing) { res.status(400).json({ error: 'Email already in use' }); return; }
+
+  const id = uuidv4();
+  const hash = bcrypt.hashSync(password, 10);
+  const now = new Date().toISOString();
+  dbRun(
+    'INSERT INTO users (id, email, username, password_hash, role, plan_id, storage_used_mb, suspended, email_verified, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+    [id, email, username, hash, 'admin', null, 0, 0, 1, now, now]
+  );
+
+  req.session.userId = id;
+  res.json({ user: sanitizeUser(dbGet('SELECT * FROM users WHERE id = ?', [id])) });
+});
+
 router.post('/register', validate(registerSchema), async (req, res) => {
   try {
     const { email, username, password } = req.body;

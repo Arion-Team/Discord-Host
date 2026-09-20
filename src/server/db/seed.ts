@@ -1,5 +1,4 @@
 import { initDb, dbRun, dbGet } from './database.js';
-import bcrypt from 'bcryptjs';
 import { v4 as uuidv4 } from 'uuid';
 
 const now = () => new Date().toISOString();
@@ -8,22 +7,14 @@ async function seed() {
   console.log('Initializing database...');
   const db = await initDb();
 
-  const adminId = uuidv4();
   const starterPlanId = uuidv4();
   const proPlanId = uuidv4();
   const premiumPlanId = uuidv4();
   const superAdminRoleId = uuidv4();
   const moderatorRoleId = uuidv4();
 
-  const existing = dbGet('SELECT id FROM users WHERE id = ?', [adminId]);
+  const existing = dbGet('SELECT id FROM users WHERE role = ?', ['admin']);
   if (!existing) {
-    const adminHash = bcrypt.hashSync('admin123', 10);
-    dbRun(
-      'INSERT INTO users (id, email, username, password_hash, role, plan_id, storage_used_mb, suspended, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-      [adminId, 'admin@discordhost.com', 'admin', adminHash, 'admin', null, 0, 0, now(), now()]
-    );
-    console.log('Created admin user (admin@discordhost.com / admin123)');
-
     const ts = now();
 
     dbRun(
@@ -76,7 +67,7 @@ async function seed() {
     );
     console.log('Created admin roles: SuperAdmin, Moderator');
   } else {
-    console.log('Database already seeded, skipping.');
+    console.log('Admin user exists, skipping seed setup.');
   }
 
   console.log('Database seeded successfully!');

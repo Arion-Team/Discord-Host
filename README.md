@@ -79,7 +79,7 @@ npx vite build
 node node_modules/tsx/dist/cli.mjs src/server/index.ts
 ```
 
-Default admin: `admin@discordhost.com` / `admin123`
+On first launch, the panel will redirect to `/setup` where you create your admin account.
 
 ## Environment Variables
 
