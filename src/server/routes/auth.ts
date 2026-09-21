@@ -3,11 +3,16 @@ import bcrypt from 'bcryptjs';
 import { v4 as uuidv4 } from 'uuid';
 import { z } from 'zod';
 import { dbGet, dbRun, dbAll } from '../db/database.js';
-import { requireAuth } from '../middleware/auth.js';
+import { requireAuth, blockInDemo } from '../middleware/auth.js';
 import { validate } from '../middleware/validate.js';
 import { sendMail, buildVerificationEmail, buildResetEmail } from '../services/email.js';
 
 const router = Router();
+
+function isDemoMode(): boolean {
+  const setting = dbGet("SELECT value FROM system_settings WHERE key = 'demoMode'");
+  return setting?.value === 'true';
+}
 
 const registerSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -70,6 +75,32 @@ router.get('/setup-check', (_req, res) => {
   res.json({ setupRequired: !admin });
 });
 
+router.get('/demo-check', (_req, res) => {
+  const demoSetting = dbGet("SELECT value FROM system_settings WHERE key = 'demoMode'");
+  const isDemo = demoSetting?.value === 'true';
+  res.json({ demoMode: isDemo });
+});
+
+router.post('/demo-login', (req, res) => {
+  const demoSetting = dbGet("SELECT value FROM system_settings WHERE key = 'demoMode'");
+  if (demoSetting?.value !== 'true') { res.status(400).json({ error: 'Demo mode is not enabled' }); return; }
+
+  let demoUser = dbGet("SELECT * FROM users WHERE email = 'demo@discordhost.com'");
+  if (!demoUser) {
+    const id = uuidv4();
+    const hash = bcrypt.hashSync('demo1234', 10);
+    const now = new Date().toISOString();
+    dbRun(
+      'INSERT INTO users (id, email, username, password_hash, role, plan_id, storage_used_mb, suspended, email_verified, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      [id, 'demo@discordhost.com', 'Demo User', hash, 'user', null, 0, 0, 1, now, now]
+    );
+    demoUser = dbGet('SELECT * FROM users WHERE id = ?', [id]);
+  }
+
+  req.session.userId = demoUser.id;
+  res.json({ user: sanitizeUser(demoUser) });
+});
+
 router.post('/setup', (req, res) => {
   const admin = dbGet('SELECT id FROM users WHERE role = ?', ['admin']);
   if (admin) { res.status(400).json({ error: 'Admin account already exists' }); return; }
@@ -93,7 +124,7 @@ router.post('/setup', (req, res) => {
   res.json({ user: sanitizeUser(dbGet('SELECT * FROM users WHERE id = ?', [id])) });
 });
 
-router.post('/register', validate(registerSchema), async (req, res) => {
+router.post('/register', blockInDemo, validate(registerSchema), async (req, res) => {
   try {
     const { email, username, password } = req.body;
 
@@ -364,7 +395,7 @@ router.post('/reset-password', validate(resetPasswordSchema), (req, res) => {
   }
 });
 
-router.post('/change-password', requireAuth, validate(changePasswordSchema), (req, res) => {
+router.post('/change-password', requireAuth, blockInDemo, validate(changePasswordSchema), (req, res) => {
   try {
     const { oldPassword, newPassword } = req.body;
 

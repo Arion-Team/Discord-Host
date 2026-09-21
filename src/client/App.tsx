@@ -12,6 +12,7 @@ const ResetPasswordPage = lazy(() => import('./pages/auth/ResetPasswordPage'));
 const WelcomePage = lazy(() => import('./pages/auth/WelcomePage'));
 const VerifyEmailPage = lazy(() => import('./pages/auth/VerifyEmailPage'));
 const SetupPage = lazy(() => import('./pages/auth/SetupPage'));
+const LandingPage = lazy(() => import('./pages/LandingPage'));
 const DashboardPage = lazy(() => import('./pages/dashboard/DashboardPage'));
 const BotsPage = lazy(() => import('./pages/dashboard/BotsPage'));
 const CreateBotPage = lazy(() => import('./pages/dashboard/CreateBotPage'));
@@ -66,7 +67,7 @@ const App: React.FC = () => {
           <Route path="/welcome" element={<ProtectedRoute><WelcomePage /></ProtectedRoute>} />
           <Route path="/verify-email" element={<ProtectedRoute><VerifyEmailPage /></ProtectedRoute>} />
 
-          <Route path="/" element={<ProtectedRoute><Navigate to="/dashboard" replace /></ProtectedRoute>} />
+          <Route path="/" element={<LandingPage />} />
 
           <Route path="/dashboard" element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
             <Route index element={<DashboardPage />} />

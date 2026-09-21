@@ -57,6 +57,7 @@ const AdminSettingsPage: React.FC = () => {
   const [botCreationDisabled, setBotCreationDisabled] = useState(false);
   const [welcomeAnimation, setWelcomeAnimation] = useState(true);
   const [emailVerification, setEmailVerification] = useState(false);
+  const [demoMode, setDemoMode] = useState(false);
   const [resendApiKey, setResendApiKey] = useState('');
   const [resendFromEmail, setResendFromEmail] = useState('');
   const [testEmail, setTestEmail] = useState('');
@@ -103,6 +104,7 @@ const AdminSettingsPage: React.FC = () => {
         setWelcomeAnimation(s.welcomeAnimation !== 'false');
       }
       setEmailVerification(s.emailVerification === 'true');
+      setDemoMode(s.demoMode === 'true');
       setResendApiKey(s.resendApiKey || '');
       setResendFromEmail(s.resendFromEmail || '');
 
@@ -241,6 +243,7 @@ const AdminSettingsPage: React.FC = () => {
         botCreationDisabled,
         welcomeAnimation,
         emailVerification,
+        demoMode,
         resendApiKey,
         resendFromEmail,
       });
@@ -338,6 +341,7 @@ const AdminSettingsPage: React.FC = () => {
           <ToggleField label="Allow Registration" description="Allow new users to register accounts." enabled={registrationEnabled} onChange={setRegistrationEnabled} />
           <ToggleField label="Maintenance Mode" description="Disable public access to the panel." enabled={maintenanceMode} onChange={setMaintenanceMode} />
           <ToggleField label="Welcome Animation" description="Show cinematic welcome animation after registration." enabled={welcomeAnimation} onChange={setWelcomeAnimation} />
+          <ToggleField label="Demo Mode" description="Enable public demo — users can try the panel without installing. Disables bot creation, start/stop, and registration." enabled={demoMode} onChange={setDemoMode} />
 
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             <div>

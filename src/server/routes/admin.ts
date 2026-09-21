@@ -258,7 +258,7 @@ router.get('/settings', requireAdmin, (_req, res) => {
 router.put('/settings', requireAdmin, (req, res) => {
   try {
     const now = new Date().toISOString();
-    const { registrationEnabled, maintenanceMode, maxBotsPerUser, maxRamMb, maxStorageMb, botCreationDisabled, welcomeAnimation, emailVerification, resendApiKey, resendFromEmail } = req.body;
+    const { registrationEnabled, maintenanceMode, maxBotsPerUser, maxRamMb, maxStorageMb, botCreationDisabled, welcomeAnimation, emailVerification, resendApiKey, resendFromEmail, demoMode } = req.body;
 
     const settings: Record<string, string> = {};
     if (registrationEnabled !== undefined) settings.registrationEnabled = String(registrationEnabled);
@@ -269,6 +269,7 @@ router.put('/settings', requireAdmin, (req, res) => {
     if (botCreationDisabled !== undefined) settings.botCreationDisabled = String(botCreationDisabled);
     if (welcomeAnimation !== undefined) settings.welcomeAnimation = String(welcomeAnimation);
     if (emailVerification !== undefined) settings.emailVerification = String(emailVerification);
+    if (demoMode !== undefined) settings.demoMode = String(demoMode);
     if (resendApiKey !== undefined) settings.resendApiKey = String(resendApiKey);
     if (resendFromEmail !== undefined) settings.resendFromEmail = String(resendFromEmail);
     if (req.body.discordToken !== undefined) settings.discordToken = String(req.body.discordToken);

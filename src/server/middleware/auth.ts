@@ -90,3 +90,12 @@ export function requireAdmin(req: Request, res: Response, next: NextFunction): v
 
   next();
 }
+
+export function blockInDemo(req: Request, res: Response, next: NextFunction): void {
+  const setting = dbGet("SELECT value FROM system_settings WHERE key = 'demoMode'");
+  if (setting?.value === 'true') {
+    res.status(403).json({ error: 'This action is disabled in demo mode' });
+    return;
+  }
+  next();
+}
