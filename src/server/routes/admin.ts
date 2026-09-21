@@ -270,6 +270,7 @@ router.put('/settings', requireAdmin, (req, res) => {
     if (welcomeAnimation !== undefined) settings.welcomeAnimation = String(welcomeAnimation);
     if (emailVerification !== undefined) settings.emailVerification = String(emailVerification);
     if (demoMode !== undefined) settings.demoMode = String(demoMode);
+    if (req.body.demoAccessCode !== undefined) settings.demoAccessCode = String(req.body.demoAccessCode);
     if (resendApiKey !== undefined) settings.resendApiKey = String(resendApiKey);
     if (resendFromEmail !== undefined) settings.resendFromEmail = String(resendFromEmail);
     if (req.body.discordToken !== undefined) settings.discordToken = String(req.body.discordToken);

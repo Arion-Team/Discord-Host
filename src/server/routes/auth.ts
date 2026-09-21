@@ -77,13 +77,19 @@ router.get('/setup-check', (_req, res) => {
 
 router.get('/demo-check', (_req, res) => {
   const demoSetting = dbGet("SELECT value FROM system_settings WHERE key = 'demoMode'");
+  const codeSetting = dbGet("SELECT value FROM system_settings WHERE key = 'demoAccessCode'");
   const isDemo = demoSetting?.value === 'true';
-  res.json({ demoMode: isDemo });
+  res.json({ demoMode: isDemo, hasCode: !!codeSetting?.value });
 });
 
 router.post('/demo-login', (req, res) => {
   const demoSetting = dbGet("SELECT value FROM system_settings WHERE key = 'demoMode'");
   if (demoSetting?.value !== 'true') { res.status(400).json({ error: 'Demo mode is not enabled' }); return; }
+
+  const codeSetting = dbGet("SELECT value FROM system_settings WHERE key = 'demoAccessCode'");
+  const { code } = req.body;
+  if (!codeSetting?.value) { res.status(400).json({ error: 'No demo access code configured' }); return; }
+  if (code !== codeSetting.value) { res.status(403).json({ error: 'Invalid demo access code' }); return; }
 
   let demoUser = dbGet("SELECT * FROM users WHERE email = 'demo@discordhost.com'");
   if (!demoUser) {

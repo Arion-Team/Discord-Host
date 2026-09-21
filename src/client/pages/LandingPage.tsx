@@ -25,6 +25,9 @@ const LandingPage: React.FC = () => {
   const navigate = useNavigate();
   const [demoLoading, setDemoLoading] = useState(false);
   const [demoMode, setDemoMode] = useState(false);
+  const [showCodeModal, setShowCodeModal] = useState(false);
+  const [demoCode, setDemoCode] = useState('');
+  const [demoError, setDemoError] = useState('');
 
   useEffect(() => {
     fetchBranding();
@@ -37,12 +40,13 @@ const LandingPage: React.FC = () => {
 
   const handleDemoLogin = async () => {
     setDemoLoading(true);
+    setDemoError('');
     try {
-      const data: any = await api.post('/auth/demo-login');
+      const data: any = await api.post('/auth/demo-login', { code: demoCode });
       useAuthStore.getState().setUser(data.user);
       navigate('/dashboard');
-    } catch {
-      alert('Demo mode is not enabled. Enable it in Admin Settings.');
+    } catch (err: any) {
+      setDemoError(err.message || 'Invalid code');
     } finally {
       setDemoLoading(false);
     }
@@ -85,9 +89,9 @@ const LandingPage: React.FC = () => {
               Login
             </Link>
             {demoMode && (
-              <button onClick={handleDemoLogin} disabled={demoLoading}
-                className="rounded-lg bg-white px-4 py-2 text-sm font-semibold text-black hover:bg-gray-100 transition-all">
-                {demoLoading ? 'Loading...' : 'Try Demo'}
+              <button onClick={() => setShowCodeModal(true)}
+                className="rounded-xl bg-white px-8 py-3.5 text-base font-semibold text-black hover:bg-gray-100 transition-all active:scale-[0.98]">
+                Try Demo
               </button>
             )}
           </div>
@@ -113,9 +117,9 @@ const LandingPage: React.FC = () => {
           </p>
           <div className="flex items-center justify-center gap-4">
             {demoMode && (
-              <button onClick={handleDemoLogin} disabled={demoLoading}
+              <button onClick={() => setShowCodeModal(true)}
                 className="flex items-center gap-2 rounded-xl bg-white px-8 py-3.5 text-base font-semibold text-black hover:bg-gray-100 transition-all active:scale-[0.98]">
-                {demoLoading ? 'Loading...' : 'Try Live Demo'}
+                Try Live Demo
                 <ArrowRight className="h-4 w-4" />
               </button>
             )}
@@ -202,6 +206,26 @@ const LandingPage: React.FC = () => {
           <span>Powered by DiscordHost</span>
         </div>
       </footer>
+
+      {/* Demo Code Modal */}
+      {showCodeModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm" onClick={() => setShowCodeModal(false)}>
+          <div className="mx-4 w-full max-w-sm rounded-2xl border border-white/10 bg-[#111] p-8 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            <h3 className="mb-2 text-xl font-bold text-white">Enter Demo Access Code</h3>
+            <p className="mb-6 text-sm text-gray-400">This demo is private. You need an access code to continue.</p>
+            {demoError && (
+              <div className="mb-4 rounded-lg bg-red-500/10 border border-red-500/20 p-3 text-sm text-red-400">{demoError}</div>
+            )}
+            <input type="text" value={demoCode} onChange={(e) => setDemoCode(e.target.value)} placeholder="Access code"
+              className="mb-4 w-full rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-center text-lg font-mono text-white tracking-widest focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+              onKeyDown={(e) => { if (e.key === 'Enter' && demoCode.trim()) handleDemoLogin(); }} autoFocus />
+            <button onClick={handleDemoLogin} disabled={demoLoading || !demoCode.trim()}
+              className="w-full rounded-lg bg-white py-3 text-sm font-semibold text-black hover:bg-gray-100 transition-all disabled:opacity-50">
+              {demoLoading ? 'Verifying...' : 'Access Demo'}
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

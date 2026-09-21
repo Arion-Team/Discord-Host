@@ -58,6 +58,7 @@ const AdminSettingsPage: React.FC = () => {
   const [welcomeAnimation, setWelcomeAnimation] = useState(true);
   const [emailVerification, setEmailVerification] = useState(false);
   const [demoMode, setDemoMode] = useState(false);
+  const [demoAccessCode, setDemoAccessCode] = useState('');
   const [resendApiKey, setResendApiKey] = useState('');
   const [resendFromEmail, setResendFromEmail] = useState('');
   const [testEmail, setTestEmail] = useState('');
@@ -105,6 +106,7 @@ const AdminSettingsPage: React.FC = () => {
       }
       setEmailVerification(s.emailVerification === 'true');
       setDemoMode(s.demoMode === 'true');
+      setDemoAccessCode(s.demoAccessCode || '');
       setResendApiKey(s.resendApiKey || '');
       setResendFromEmail(s.resendFromEmail || '');
 
@@ -244,6 +246,7 @@ const AdminSettingsPage: React.FC = () => {
         welcomeAnimation,
         emailVerification,
         demoMode,
+        demoAccessCode,
         resendApiKey,
         resendFromEmail,
       });
@@ -342,6 +345,14 @@ const AdminSettingsPage: React.FC = () => {
           <ToggleField label="Maintenance Mode" description="Disable public access to the panel." enabled={maintenanceMode} onChange={setMaintenanceMode} />
           <ToggleField label="Welcome Animation" description="Show cinematic welcome animation after registration." enabled={welcomeAnimation} onChange={setWelcomeAnimation} />
           <ToggleField label="Demo Mode" description="Enable public demo — users can try the panel without installing. Disables bot creation, start/stop, and registration." enabled={demoMode} onChange={setDemoMode} />
+          {demoMode && (
+            <div>
+              <label className="mb-1.5 block text-sm font-medium text-gray-300">Demo Access Code</label>
+              <input type="text" value={demoAccessCode} onChange={(e) => setDemoAccessCode(e.target.value)} placeholder="Secret code to access demo"
+                className="w-full rounded-lg border border-white/10 bg-white/5 px-4 py-2.5 text-white focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500" />
+              <p className="mt-1 text-xs text-gray-500">Users must enter this code to access the demo. Share it only with people you trust.</p>
+            </div>
+          )}
 
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             <div>
