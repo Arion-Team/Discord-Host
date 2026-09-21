@@ -13,8 +13,12 @@ import { v4 as uuidv4 } from 'uuid';
 import bcrypt from 'bcryptjs';
 import { initDb, dbGet, dbRun } from './db/database.js';
 import { BotManager } from './engine/BotManager.js';
+import authRoutes from './routes/auth.js';
+import botRoutes from './routes/bots.js';
+import adminRoutes from './routes/admin.js';
 import brandingRoutes from './routes/branding.js';
 import plansRoutes from './routes/plans.js';
+import filesRoutes from './routes/files.js';
 
 const DEMO_PORT = parseInt(process.env.DEMO_PORT || '3001', 10);
 const SESSION_SECRET = process.env.SESSION_SECRET || 'demo-secret';
@@ -72,99 +76,28 @@ async function main() {
     next();
   });
 
-  // Auto-login: every request session is the demo user
+  // Auto-login: every request is the demo user
   app.use((req, _res, next) => {
     req.session.userId = demoUser.id;
     next();
   });
 
-  // Block destructive actions
-  app.use('/api/bots', (req, res, next) => {
-    if (['POST', 'PUT', 'DELETE'].includes(req.method)) {
-      if (req.method === 'POST' && (req.path === '/' || req.path === '/import-github')) {
-        return res.status(403).json({ error: 'Demo mode: bot creation disabled' });
-      }
-      if (req.method === 'DELETE') {
-        return res.status(403).json({ error: 'Demo mode: deletion disabled' });
-      }
-      if (req.path.includes('/start') || req.path.includes('/stop') || req.path.includes('/restart')) {
-        return res.status(403).json({ error: 'Demo mode: bot control disabled' });
-      }
-    }
-    next();
-  });
-
-  app.use('/api/admin', (req, res, next) => {
-    if (['PUT', 'POST', 'DELETE'].includes(req.method)) {
-      return res.status(403).json({ error: 'Demo mode: admin changes disabled' });
-    }
-    next();
-  });
-
-  // Minimal auth endpoints for demo
+  // Override auth endpoints for demo
   app.get('/api/auth/me', (_req, res) => {
-    res.json({
-      user: {
-        id: demoUser.id,
-        email: demoUser.email,
-        username: demoUser.username,
-        role: demoUser.role,
-        planId: demoUser.plan_id,
-        storageUsedMb: demoUser.storage_used_mb,
-        suspended: false,
-        createdAt: demoUser.created_at,
-        updatedAt: demoUser.updated_at,
-      },
-    });
+    const user = dbGet('SELECT id, email, username, role, plan_id, storage_used_mb, suspended, created_at, updated_at FROM users WHERE id = ?', [demoUser.id]);
+    res.json({ user });
   });
 
-  app.post('/api/auth/logout', (req, res) => {
-    req.session.destroy(() => {});
-    res.json({ success: true });
-  });
-
-  // Minimal endpoints for demo browsing
   app.get('/api/auth/setup-check', (_req, res) => res.json({ setupRequired: false }));
   app.get('/api/auth/demo-check', (_req, res) => res.json({ demoMode: true }));
 
+  // Use all main server routes (auto-logged-in session handles auth)
+  app.use('/api/auth', authRoutes);
+  app.use('/api/bots', botRoutes);
+  app.use('/api/admin', adminRoutes);
   app.use('/api/branding', brandingRoutes);
   app.use('/api/plans', plansRoutes);
-
-  // Bot listing (read-only)
-  app.get('/api/bots', (req, res) => {
-    try {
-      const bots = dbRun ? require('./db/database.js').dbAll('SELECT * FROM bots WHERE user_id = ?', [demoUser.id]) : [];
-      res.json({ bots: (bots || []).map((b: any) => ({
-        id: b.id, name: b.name, status: 'stopped', ramMb: b.ram_mb,
-        createdAt: b.created_at, updatedAt: b.updated_at,
-      }))});
-    } catch { res.json({ bots: [] }); }
-  });
-
-  app.get('/api/bots/ads/active', (_req, res) => {
-    try {
-      const ads = require('./db/database.js').dbAll('SELECT * FROM bot_ads WHERE active = 1 ORDER BY created_at DESC') || [];
-      res.json({ ads });
-    } catch { res.json({ ads: [] }); }
-  });
-
-  app.get('/api/bots/:id', (req, res) => {
-    try {
-      const bot = require('./db/database.js').dbGet('SELECT * FROM bots WHERE id = ? AND user_id = ?', [req.params.id, demoUser.id]);
-      if (!bot) return res.status(404).json({ error: 'Bot not found' });
-      res.json({ bot: { ...bot, status: 'stopped' } });
-    } catch { res.status(404).json({ error: 'Bot not found' }); }
-  });
-
-  // System status
-  app.get('/api/admin/system-status', (_req, res) => {
-    const os = require('os');
-    res.json({
-      cpu: { model: os.cpus()[0]?.model || 'Unknown', cores: os.cpus().length, usage: 0 },
-      memory: { totalMb: Math.round(os.totalmem() / 1024 / 1024), usedMb: Math.round((os.totalmem() - os.freemem()) / 1024 / 1024), freeMb: Math.round(os.freemem() / 1024 / 1024) },
-      platform: os.platform(), uptime: os.uptime(),
-    });
-  });
+  app.use('/api/files', filesRoutes);
 
   // Serve frontend
   const clientDistPath = path.resolve(process.cwd(), 'dist', 'client');
