@@ -27,6 +27,7 @@ interface BotData {
   name: string;
   status: string;
   runtime: string;
+  ramMb?: number;
   createdAt: string;
 }
 
@@ -40,6 +41,8 @@ interface DashboardStats {
   planName: string;
   ramLimitMb: number;
   maxBots: number;
+  ramUsedMb: number;
+  bots: { id: string; name: string; ramMb: number; status: string }[];
 }
 
 interface ActivityItem {
@@ -170,6 +173,7 @@ const DashboardPage: React.FC = () => {
           {
             label: 'Total Bots',
             value: stats?.totalBots ?? 0,
+            sub: `${stats?.maxBots || 3} max`,
             icon: Bot,
             color: 'text-white',
             bg: 'bg-white/5',
@@ -178,25 +182,28 @@ const DashboardPage: React.FC = () => {
           {
             label: 'Running',
             value: stats?.runningBots ?? 0,
+            sub: `${stats?.stoppedBots || 0} stopped`,
             icon: Play,
             color: 'text-green-400',
             bg: 'bg-green-500/10',
             delay: '0.05s',
           },
           {
-            label: 'Storage Used',
+            label: 'Storage',
             value: stats ? `${(stats.storageUsedMb / 1024).toFixed(1)} GB` : '0 GB',
+            sub: `${((stats?.storageLimitMb || 5120) / 1024).toFixed(0)} GB limit`,
             icon: HardDrive,
             color: 'text-blue-400',
             bg: 'bg-blue-500/10',
             delay: '0.1s',
           },
           {
-            label: 'Plan',
-            value: stats?.planName || 'Free',
-            icon: Zap,
-            color: 'text-yellow-400',
-            bg: 'bg-yellow-500/10',
+            label: 'RAM',
+            value: stats ? `${stats.ramUsedMb} MB` : '0 MB',
+            sub: `${stats?.ramLimitMb || 256} MB limit`,
+            icon: Cpu,
+            color: 'text-purple-400',
+            bg: 'bg-purple-500/10',
             delay: '0.15s',
           },
         ].map((stat) => (
@@ -209,6 +216,7 @@ const DashboardPage: React.FC = () => {
               <div>
                 <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">{stat.label}</p>
                 <p className="mt-2 text-2xl font-bold text-white">{stat.value}</p>
+                {stat.sub && <p className="mt-0.5 text-xs text-gray-600">{stat.sub}</p>}
               </div>
               <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${stat.bg}`}>
                 <stat.icon className={`h-5 w-5 ${stat.color}`} />
@@ -217,6 +225,63 @@ const DashboardPage: React.FC = () => {
           </div>
         ))}
       </div>
+
+      {/* Resource Usage */}
+      {stats && (stats.totalBots > 0 || stats.ramUsedMb > 0) && (
+        <div className="rounded-xl border border-white/5 bg-[#111111] p-6 animate-slide-up-delay-1">
+          <div className="flex items-center gap-2 mb-4">
+            <Activity className="h-4 w-4 text-gray-500" />
+            <h2 className="text-sm font-semibold text-white">Resource Usage</h2>
+            <span className="ml-auto rounded-full bg-white/5 px-2.5 py-0.5 text-[10px] font-medium text-gray-400">{stats.planName}</span>
+          </div>
+          <div className="grid gap-6 sm:grid-cols-2">
+            {/* RAM */}
+            <div>
+              <div className="flex items-center justify-between text-xs mb-2">
+                <span className="text-gray-400">RAM</span>
+                <span className="text-white font-medium">{stats.ramUsedMb} / {stats.ramLimitMb} MB</span>
+              </div>
+              <div className="h-2.5 rounded-full bg-white/5 overflow-hidden">
+                <div className={`h-full rounded-full transition-all duration-500 ${
+                  (stats.ramUsedMb / stats.ramLimitMb) > 0.9 ? 'bg-red-500' : (stats.ramUsedMb / stats.ramLimitMb) > 0.7 ? 'bg-yellow-500' : 'bg-white'
+                }`} style={{ width: `${Math.min((stats.ramUsedMb / stats.ramLimitMb) * 100, 100)}%` }} />
+              </div>
+              <p className="mt-1.5 text-[10px] text-gray-600">{(stats.ramLimitMb - stats.ramUsedMb).toFixed(0)} MB available</p>
+            </div>
+            {/* Storage */}
+            <div>
+              <div className="flex items-center justify-between text-xs mb-2">
+                <span className="text-gray-400">Storage</span>
+                <span className="text-white font-medium">{(stats.storageUsedMb / 1024).toFixed(2)} / {(stats.storageLimitMb / 1024).toFixed(1)} GB</span>
+              </div>
+              <div className="h-2.5 rounded-full bg-white/5 overflow-hidden">
+                <div className={`h-full rounded-full transition-all duration-500 ${
+                  (stats.storageUsedMb / stats.storageLimitMb) > 0.9 ? 'bg-red-500' : (stats.storageUsedMb / stats.storageLimitMb) > 0.7 ? 'bg-yellow-500' : 'bg-white'
+                }`} style={{ width: `${Math.min((stats.storageUsedMb / stats.storageLimitMb) * 100, 100)}%` }} />
+              </div>
+              <p className="mt-1.5 text-[10px] text-gray-600">{((stats.storageLimitMb - stats.storageUsedMb) / 1024).toFixed(2)} GB available</p>
+            </div>
+          </div>
+          {/* Per-bot RAM breakdown */}
+          {stats.bots && stats.bots.length > 0 && (
+            <div className="mt-5 pt-4 border-t border-white/5">
+              <p className="text-[10px] text-gray-600 uppercase tracking-wider mb-3">Per-Bot RAM Allocation</p>
+              <div className="space-y-2">
+                {stats.bots.map((b) => (
+                  <div key={b.id} className="flex items-center gap-3">
+                    <div className={`h-2 w-2 rounded-full ${b.status === 'running' ? 'bg-green-500' : b.status === 'crashed' ? 'bg-red-500' : 'bg-gray-600'}`} />
+                    <span className="text-xs text-gray-400 flex-1 truncate">{b.name}</span>
+                    <span className="text-xs text-white font-medium">{b.ramMb} MB</span>
+                    <div className="w-20 h-1.5 rounded-full bg-white/5 overflow-hidden">
+                      <div className="h-full rounded-full bg-white/40" style={{ width: `${(b.ramMb / stats.ramLimitMb) * 100}%` }} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Main Content Grid */}
       <div className="grid gap-6 lg:grid-cols-3">
@@ -276,7 +341,7 @@ const DashboardPage: React.FC = () => {
                         {bot.name}
                       </p>
                       <p className="text-xs text-gray-600">
-                        {bot.runtime} &middot; {timeAgo(bot.createdAt)}
+                        {bot.runtime} &middot; {bot.ramMb || 256} MB RAM &middot; {timeAgo(bot.createdAt)}
                       </p>
                     </div>
                   </div>
