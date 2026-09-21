@@ -13,12 +13,13 @@ import {
   LogOut,
   ArrowLeft,
 } from 'lucide-react';
-import { useAuthStore } from '../lib/store';
+import { useAuthStore, useBrandingStore } from '../lib/store';
 
 const AdminSidebar: React.FC = () => {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const { user, logout } = useAuthStore();
+  const { settings } = useBrandingStore();
   const navigate = useNavigate();
 
   const handleLogout = async () => {
@@ -67,10 +68,14 @@ const AdminSidebar: React.FC = () => {
         <div className="flex h-16 items-center justify-between border-b border-white/5 px-4">
           {!collapsed && (
             <div className="flex items-center gap-2">
-              <div className="flex h-6 w-6 items-center justify-center rounded bg-white text-xs font-bold text-black">
-                A
-              </div>
-              <span className="text-sm font-bold text-white">Admin Panel</span>
+              {settings.logo ? (
+                <img src={settings.logo} alt="Logo" className="h-6 w-6 rounded object-contain" />
+              ) : (
+                <div className="flex h-6 w-6 items-center justify-center rounded bg-white text-xs font-bold text-black">
+                  A
+                </div>
+              )}
+              <span className="text-sm font-bold text-white">{settings.siteName || 'DiscordHost'}</span>
             </div>
           )}
           <button

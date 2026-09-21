@@ -33,7 +33,7 @@
 
   body {
     background-color: var(--bg-color);
-    background-image: var(--bg-gradient);
+    background-image: var(--bg-image, var(--bg-gradient));
     min-height: 100vh;
     color: #ffffff;
   }

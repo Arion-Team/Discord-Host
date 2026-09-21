@@ -42,9 +42,16 @@ const LoginPage: React.FC = () => {
       )}
 
       <div className="mx-auto w-full max-w-sm">
+        {settings.logo ? (
+          <img src={settings.logo} alt="Logo" className="mb-6 h-10 w-auto object-contain" />
+        ) : (
+          <div className="mb-6 flex h-10 w-10 items-center justify-center rounded-lg bg-white text-lg font-bold text-black">
+            {settings.siteName?.[0] || 'D'}
+          </div>
+        )}
         <h1 className="text-3xl font-bold text-white">Sign in to {settings.siteName || 'DiscordHost'}</h1>
         <p className="mt-2 text-sm text-gray-400">
-          Please enter your account credentials below.
+          {settings.loginSubtitle || 'Please enter your account credentials below.'}
         </p>
 
         {error && (

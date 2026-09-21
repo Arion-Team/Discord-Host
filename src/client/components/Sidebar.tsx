@@ -9,12 +9,13 @@ import {
   ChevronLeft,
   Menu,
 } from 'lucide-react';
-import { useAuthStore } from '../lib/store';
+import { useAuthStore, useBrandingStore } from '../lib/store';
 
 const Sidebar: React.FC = () => {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const { user, logout } = useAuthStore();
+  const { settings } = useBrandingStore();
   const navigate = useNavigate();
 
   const handleLogout = async () => {
@@ -59,10 +60,14 @@ const Sidebar: React.FC = () => {
         <div className="flex h-16 items-center justify-between border-b border-white/5 px-4">
           {!collapsed && (
             <div className="flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white text-sm font-bold text-black">
-                D
-              </div>
-              <span className="text-lg font-bold text-white">DiscordHost</span>
+              {settings.logo ? (
+                <img src={settings.logo} alt="Logo" className="h-8 w-8 rounded-lg object-contain" />
+              ) : (
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white text-sm font-bold text-black">
+                  {settings.siteName?.[0] || 'D'}
+                </div>
+              )}
+              <span className="text-lg font-bold text-white">{settings.siteName || 'DiscordHost'}</span>
             </div>
           )}
           <button
