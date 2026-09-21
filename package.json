@@ -11,6 +11,8 @@
     "build:client": "vite build",
     "build:server": "tsc -p tsconfig.server.json",
     "start": "node dist/server/index.js",
+    "demo": "node node_modules/tsx/dist/cli.mjs src/server/demo-server.ts",
+    "demo:start": "node node_modules/tsx/dist/cli.mjs src/server/demo-server.ts",
     "lint": "eslint src --ext .ts,.tsx",
     "typecheck": "tsc --noEmit",
     "db:seed": "tsx src/server/db/seed.ts",

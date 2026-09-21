@@ -14,9 +14,6 @@ import {
   ArrowRight,
   Check,
   Star,
-  Users,
-  Crown,
-  MessageSquare,
 } from 'lucide-react';
 
 const LandingPage: React.FC = () => {
@@ -25,9 +22,6 @@ const LandingPage: React.FC = () => {
   const navigate = useNavigate();
   const [demoLoading, setDemoLoading] = useState(false);
   const [demoMode, setDemoMode] = useState(false);
-  const [showCodeModal, setShowCodeModal] = useState(false);
-  const [demoCode, setDemoCode] = useState('');
-  const [demoError, setDemoError] = useState('');
 
   useEffect(() => {
     fetchBranding();
@@ -38,18 +32,10 @@ const LandingPage: React.FC = () => {
     if (user) navigate('/dashboard');
   }, [user, navigate]);
 
-  const handleDemoLogin = async () => {
-    setDemoLoading(true);
-    setDemoError('');
-    try {
-      const data: any = await api.post('/auth/demo-login', { code: demoCode });
-      useAuthStore.getState().setUser(data.user);
-      navigate('/dashboard');
-    } catch (err: any) {
-      setDemoError(err.message || 'Invalid code');
-    } finally {
-      setDemoLoading(false);
-    }
+  const handleDemoLogin = () => {
+    const demoPort = import.meta.env.VITE_DEMO_PORT || '3001';
+    const base = window.location.hostname;
+    window.location.href = `http://${base}:${demoPort}`;
   };
 
   const features = [
@@ -89,7 +75,7 @@ const LandingPage: React.FC = () => {
               Login
             </Link>
             {demoMode && (
-              <button onClick={() => setShowCodeModal(true)}
+              <button onClick={handleDemoLogin}
                 className="rounded-xl bg-white px-8 py-3.5 text-base font-semibold text-black hover:bg-gray-100 transition-all active:scale-[0.98]">
                 Try Demo
               </button>
@@ -117,7 +103,7 @@ const LandingPage: React.FC = () => {
           </p>
           <div className="flex items-center justify-center gap-4">
             {demoMode && (
-              <button onClick={() => setShowCodeModal(true)}
+              <button onClick={handleDemoLogin}
                 className="flex items-center gap-2 rounded-xl bg-white px-8 py-3.5 text-base font-semibold text-black hover:bg-gray-100 transition-all active:scale-[0.98]">
                 Try Live Demo
                 <ArrowRight className="h-4 w-4" />
@@ -206,26 +192,6 @@ const LandingPage: React.FC = () => {
           <span>Powered by DiscordHost</span>
         </div>
       </footer>
-
-      {/* Demo Code Modal */}
-      {showCodeModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm" onClick={() => setShowCodeModal(false)}>
-          <div className="mx-4 w-full max-w-sm rounded-2xl border border-white/10 bg-[#111] p-8 shadow-2xl" onClick={(e) => e.stopPropagation()}>
-            <h3 className="mb-2 text-xl font-bold text-white">Enter Demo Access Code</h3>
-            <p className="mb-6 text-sm text-gray-400">This demo is private. You need an access code to continue.</p>
-            {demoError && (
-              <div className="mb-4 rounded-lg bg-red-500/10 border border-red-500/20 p-3 text-sm text-red-400">{demoError}</div>
-            )}
-            <input type="text" value={demoCode} onChange={(e) => setDemoCode(e.target.value)} placeholder="Access code"
-              className="mb-4 w-full rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-center text-lg font-mono text-white tracking-widest focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-              onKeyDown={(e) => { if (e.key === 'Enter' && demoCode.trim()) handleDemoLogin(); }} autoFocus />
-            <button onClick={handleDemoLogin} disabled={demoLoading || !demoCode.trim()}
-              className="w-full rounded-lg bg-white py-3 text-sm font-semibold text-black hover:bg-gray-100 transition-all disabled:opacity-50">
-              {demoLoading ? 'Verifying...' : 'Access Demo'}
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
