@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import { z } from 'zod';
 import { dbGet, dbAll, dbRun } from '../db/database.js';
-import { requireAuth, blockInDemo } from '../middleware/auth.js';
+import { requireAuth } from '../middleware/auth.js';
 import { validate } from '../middleware/validate.js';
 import { BotManager } from '../engine/BotManager.js';
 import multer from 'multer';
@@ -175,7 +175,7 @@ router.post('/import-github', requireAuth, (req, res) => {
 });
 
 // Create bot
-router.post('/', requireAuth, blockInDemo, validate(createBotSchema), (req, res) => {
+router.post('/', requireAuth, validate(createBotSchema), (req, res) => {
   try {
     // Check email verification if required
     const verifyEnabled = dbGet("SELECT value FROM system_settings WHERE key = 'emailVerification'")?.value;
@@ -289,7 +289,7 @@ router.put('/:id', requireAuth, validate(updateBotSchema), (req, res) => {
 });
 
 // Delete bot
-router.delete('/:id', requireAuth, blockInDemo, (req, res) => {
+router.delete('/:id', requireAuth, (req, res) => {
   try {
     const existing = dbGet('SELECT * FROM bots WHERE id = ? AND user_id = ?', [req.params.id, req.session.userId!]);
     if (!existing) { res.status(404).json({ error: 'Bot not found' }); return; }
@@ -305,7 +305,7 @@ router.delete('/:id', requireAuth, blockInDemo, (req, res) => {
 });
 
 // Start bot
-router.post('/:id/start', requireAuth, blockInDemo, (req, res) => {
+router.post('/:id/start', requireAuth, (req, res) => {
   try {
     const row = dbGet('SELECT * FROM bots WHERE id = ? AND user_id = ?', [req.params.id, req.session.userId!]);
     if (!row) { res.status(404).json({ error: 'Bot not found' }); return; }
@@ -324,7 +324,7 @@ router.post('/:id/start', requireAuth, blockInDemo, (req, res) => {
 });
 
 // Stop bot
-router.post('/:id/stop', requireAuth, blockInDemo, (req, res) => {
+router.post('/:id/stop', requireAuth, (req, res) => {
   try {
     const row = dbGet('SELECT * FROM bots WHERE id = ? AND user_id = ?', [req.params.id, req.session.userId!]);
     if (!row) { res.status(404).json({ error: 'Bot not found' }); return; }
