@@ -173,25 +173,37 @@ class BotManager {
 
       child.on('error', (err) => {
         this.emitLog(botId, 'error', `Process error: ${err.message}`);
-        this.handleBotCrash(botId);
+        this.handleBotCrash(botId, err.message);
       });
 
       child.on('exit', (code, signal) => {
-        this.emitLog(botId, 'warn', `Process exited with code ${code}, signal ${signal}`);
+        const exitCode = code ?? 1;
+        const exitMsg = `Process exited with code ${code}, signal ${signal}`;
+        this.emitLog(botId, 'warn', exitMsg);
         this.runningBots.delete(botId);
-        const exitStatus = code === 0 || code === null ? 'stopped' : 'crashed';
+        const exitStatus = exitCode === 0 ? 'stopped' : 'crashed';
         dbRun(`UPDATE bots SET status = '${exitStatus}', updated_at = ? WHERE id = ?`, [new Date().toISOString(), botId]);
         this.emitStatus(botId, exitStatus);
 
-        const updatedBot = dbGet('SELECT auto_restart FROM bots WHERE id = ?', [botId]) as { auto_restart: number } | undefined;
-        if (updatedBot?.auto_restart && code !== 0) {
-          this.emitLog(botId, 'info', 'Auto-restarting bot...');
-          setTimeout(() => this.startBot(botId), 3000);
+        if (exitCode !== 0) {
+          const now = new Date().toISOString();
+          dbRun("UPDATE bots SET crash_count = crash_count + 1, last_crash_error = ?, last_crash_at = ?, updated_at = ? WHERE id = ?", [exitMsg, now, now, botId]);
+        }
+
+        const updatedBot = dbGet('SELECT auto_restart, crash_count FROM bots WHERE id = ?', [botId]) as { auto_restart: number; crash_count: number } | undefined;
+        if (updatedBot?.auto_restart && exitCode !== 0 && (updatedBot.crash_count || 0) < 3) {
+          const delay = Math.min(5000 * (updatedBot.crash_count || 1), 15000);
+          this.emitLog(botId, 'info', `Auto-restarting in ${delay / 1000}s... (attempt ${(updatedBot.crash_count || 0)}/3)`);
+          setTimeout(() => this.startBot(botId), delay);
+        } else if (updatedBot?.crash_count >= 3) {
+          this.emitLog(botId, 'error', 'Bot crashed 3 times — stopped auto-restart. Fix your code and restart manually.');
+          dbRun("UPDATE bots SET status = 'crashed', updated_at = ? WHERE id = ?", [now, botId]);
+          this.emitStatus(botId, 'crashed');
         }
       });
 
       this.runningBots.set(botId, runningBot);
-      dbRun("UPDATE bots SET status = 'running', updated_at = ? WHERE id = ?", [new Date().toISOString(), botId]);
+      dbRun("UPDATE bots SET status = 'running', crash_count = 0, updated_at = ? WHERE id = ?", [new Date().toISOString(), botId]);
       this.emitStatus(botId, 'running');
       this.emitLog(botId, 'info', `Bot ${bot.name} started successfully`);
 
@@ -229,9 +241,10 @@ class BotManager {
     return true;
   }
 
-  private handleBotCrash(botId: string) {
+  private handleBotCrash(botId: string, errorMsg?: string) {
+    const now = new Date().toISOString();
     this.runningBots.delete(botId);
-    dbRun("UPDATE bots SET status = 'crashed', updated_at = ? WHERE id = ?", [new Date().toISOString(), botId]);
+    dbRun("UPDATE bots SET status = 'crashed', crash_count = crash_count + 1, last_crash_error = ?, last_crash_at = ?, updated_at = ? WHERE id = ?", [errorMsg || 'Unknown error', now, now, botId]);
     this.emitStatus(botId, 'crashed');
   }
 

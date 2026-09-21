@@ -438,7 +438,7 @@ router.get('/dashboard-stats', requireAuth, (req, res) => {
     const crashedBots = dbGet("SELECT COUNT(*) as count FROM bots WHERE user_id = ? AND status = 'crashed'", [userId]);
     const user = dbGet('SELECT storage_used_mb, plan_id FROM users WHERE id = ?', [userId]);
     const plans = dbGet('SELECT * FROM hosting_plans WHERE id = ?', [user?.plan_id || '']);
-    const userBots = dbAll('SELECT id, name, ram_mb, status FROM bots WHERE user_id = ?', [userId]);
+    const userBots = dbAll('SELECT id, name, ram_mb, status, crash_count, last_crash_error, last_crash_at FROM bots WHERE user_id = ?', [userId]);
     const totalRamUsed = (userBots || []).reduce((sum: number, b: any) => sum + (b.ram_mb || 0), 0);
 
     res.json({
@@ -455,6 +455,7 @@ router.get('/dashboard-stats', requireAuth, (req, res) => {
         ramUsedMb: totalRamUsed,
         bots: (userBots || []).map((b: any) => ({
           id: b.id, name: b.name, ramMb: b.ram_mb, status: b.status,
+          crashCount: b.crash_count || 0, lastCrashError: b.last_crash_error, lastCrashAt: b.last_crash_at,
         })),
       },
     });

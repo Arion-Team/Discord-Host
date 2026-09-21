@@ -28,6 +28,8 @@ interface BotData {
   status: string;
   runtime: string;
   ramMb?: number;
+  crashCount?: number;
+  lastCrashError?: string | null;
   createdAt: string;
 }
 
@@ -42,7 +44,7 @@ interface DashboardStats {
   ramLimitMb: number;
   maxBots: number;
   ramUsedMb: number;
-  bots: { id: string; name: string; ramMb: number; status: string }[];
+  bots: { id: string; name: string; ramMb: number; status: string; crashCount: number; lastCrashError: string | null; lastCrashAt: string | null }[];
 }
 
 interface ActivityItem {
@@ -268,13 +270,20 @@ const DashboardPage: React.FC = () => {
               <p className="text-[10px] text-gray-600 uppercase tracking-wider mb-3">Per-Bot RAM Allocation</p>
               <div className="space-y-2">
                 {stats.bots.map((b) => (
-                  <div key={b.id} className="flex items-center gap-3">
-                    <div className={`h-2 w-2 rounded-full ${b.status === 'running' ? 'bg-green-500' : b.status === 'crashed' ? 'bg-red-500' : 'bg-gray-600'}`} />
-                    <span className="text-xs text-gray-400 flex-1 truncate">{b.name}</span>
-                    <span className="text-xs text-white font-medium">{b.ramMb} MB</span>
-                    <div className="w-20 h-1.5 rounded-full bg-white/5 overflow-hidden">
-                      <div className="h-full rounded-full bg-white/40" style={{ width: `${(b.ramMb / stats.ramLimitMb) * 100}%` }} />
+                  <div key={b.id}>
+                    <div className="flex items-center gap-3">
+                      <div className={`h-2 w-2 rounded-full ${b.status === 'running' ? 'bg-green-500' : b.status === 'crashed' ? 'bg-red-500' : 'bg-gray-600'}`} />
+                      <span className="text-xs text-gray-400 flex-1 truncate">{b.name}</span>
+                      <span className="text-xs text-white font-medium">{b.ramMb} MB</span>
+                      <div className="w-20 h-1.5 rounded-full bg-white/5 overflow-hidden">
+                        <div className="h-full rounded-full bg-white/40" style={{ width: `${(b.ramMb / stats.ramLimitMb) * 100}%` }} />
+                      </div>
                     </div>
+                    {b.status === 'crashed' && b.lastCrashError && (
+                      <div className="mt-1 ml-5 rounded bg-red-500/5 px-2 py-1 text-[10px] text-red-400/70 truncate">
+                        {b.lastCrashError.length > 80 ? b.lastCrashError.substring(0, 80) + '...' : b.lastCrashError}
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
@@ -346,6 +355,11 @@ const DashboardPage: React.FC = () => {
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
+                    {bot.status === 'crashed' && (
+                      <span className="text-[10px] text-red-400" title={bot.lastCrashError || 'Crashed'}>
+                        {bot.crashCount || 1}x crash
+                      </span>
+                    )}
                     <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider ${
                       bot.status === 'running'
                         ? 'bg-green-500/10 text-green-400'

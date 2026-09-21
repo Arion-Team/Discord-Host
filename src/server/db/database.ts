@@ -62,6 +62,10 @@ export async function initDb(): Promise<SqlJsDatabase> {
   try { db.run("ALTER TABLE users ADD COLUMN discord_banner TEXT"); } catch {}
   try { db.run("ALTER TABLE users ADD COLUMN discord_display_name TEXT"); } catch {}
 
+  try { db.run("ALTER TABLE bots ADD COLUMN crash_count INTEGER DEFAULT 0"); } catch {}
+  try { db.run("ALTER TABLE bots ADD COLUMN last_crash_error TEXT"); } catch {}
+  try { db.run("ALTER TABLE bots ADD COLUMN last_crash_at TEXT"); } catch {}
+
   db.run(`
     CREATE TABLE IF NOT EXISTS bots (
       id TEXT PRIMARY KEY,

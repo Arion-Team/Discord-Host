@@ -9,6 +9,7 @@ import {
   Trash2,
   Loader2,
   AlertCircle,
+  AlertTriangle,
   Cpu,
   MemoryStick,
   Clock,
@@ -31,6 +32,9 @@ interface BotData {
   uptimeMs: number;
   autoRestart: boolean;
   envVars: Record<string, string>;
+  crashCount: number;
+  lastCrashError: string | null;
+  lastCrashAt: string | null;
   createdAt: string;
 }
 
@@ -343,6 +347,18 @@ const BotDetailPage: React.FC = () => {
             </p>
           </div>
         </div>
+        {bot.status === 'crashed' && bot.lastCrashError && (
+          <div className="mt-4 rounded-lg border border-red-500/20 bg-red-500/5 p-4">
+            <div className="flex items-center gap-2 text-sm font-medium text-red-400 mb-2">
+              <AlertTriangle className="h-4 w-4" />
+              Crash Error (x{bot.crashCount || 1})
+            </div>
+            <p className="text-xs text-red-400/70 font-mono break-all">{bot.lastCrashError}</p>
+            {bot.lastCrashAt && (
+              <p className="mt-1 text-[10px] text-gray-600">Last crash: {new Date(bot.lastCrashAt).toLocaleString()}</p>
+            )}
+          </div>
+        )}
         <div className="mt-4 flex gap-2">
           {bot.status !== 'running' && (
             <button
