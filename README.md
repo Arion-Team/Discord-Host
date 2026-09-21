@@ -98,11 +98,41 @@ npm install --omit=dev
 
 # Build
 npx vite build
+```
 
-# Start with PM2
+### Start with PM2 (Recommended)
+
+PM2 runs the panel in the background with auto-restart on crash or reboot.
+
+```bash
+# Install PM2 globally
+npm install -g pm2
+
+# Start the panel
 pm2 start ecosystem.config.cjs
 
-# Or start directly
+# Save process list (auto-restores on reboot)
+pm2 save
+
+# Auto-start on system boot (run once)
+pm2 startup
+```
+
+### PM2 Commands
+
+```bash
+pm2 status              # Check if panel is running
+pm2 restart discordhost # Restart the panel
+pm2 stop discordhost    # Stop the panel
+pm2 logs discordhost    # View live logs
+pm2 logs discordhost --lines 50  # Last 50 log lines
+pm2 delete discordhost  # Remove from PM2
+```
+
+### Without PM2
+
+```bash
+# Start directly
 NODE_ENV=production node node_modules/tsx/dist/cli.mjs src/server/index.ts
 ```
 
