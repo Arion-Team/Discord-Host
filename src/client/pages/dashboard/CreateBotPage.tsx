@@ -222,7 +222,7 @@ const CreateBotPage: React.FC = () => {
 
         {mode === 'github' && (
           <form onSubmit={handleSubmitGithub} className="space-y-4">
-            <CommonFields name={name} setName={setName} token={token} setToken={setToken} runtime={repoRuntime} setRuntime={setRepoRuntime} startupCommand={startupCommand} setStartupCommand={setStartupCommand} ramMb={ramMb} setRamMb={setRamMb} autoRestart={autoRestart} setAutoRestart={setAutoRestart} envVars={envVars} addEnvVar={addEnvVar} removeEnvVar={removeEnvVar} updateEnvVar={updateEnvVar} />
+            <CommonFields name={name} setName={setName} token={token} setToken={setToken} runtime={repoRuntime} setRuntime={setRepoRuntime} startupCommand={startupCommand} setStartupCommand={setStartupCommand} autoRestart={autoRestart} setAutoRestart={setAutoRestart} envVars={envVars} addEnvVar={addEnvVar} removeEnvVar={removeEnvVar} updateEnvVar={updateEnvVar} />
             <div>
               <label className="mb-1.5 block text-sm font-medium text-gray-300">GitHub Repository URL</label>
               <input
